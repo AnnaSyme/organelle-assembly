@@ -15,5 +15,7 @@ awk '$3 == "0"' < samout > awkout
 wc -l awkout
 
 #num lines is number of positions with no reads that mapped
+#can see contiguous regions
+#can view in bam file in a Galaxy-JBrowse file
 
 
