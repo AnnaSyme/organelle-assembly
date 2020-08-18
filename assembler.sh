@@ -73,7 +73,7 @@ function usage {
   msg "   -h                     Show this help"
   msg "   -t NUM                 Number of threads (default=16)"
   msg "   -g NUM                 genome size in bp (default=160000)"
-  msg "   -s NUM                 target bases in bp (default=4000000)"
+  msg "   -s NUM                 target bases in bp (default=40000000)"
   msg "   -b FILE                bait sequences file name"
   msg "Example:"
   msg "   $script -t 8 R1.fq.gz R2.fq.gz minion.fq.gz"
@@ -261,7 +261,7 @@ samtools fastq -0 $nano_extracted2 -n -F 4 -
 msg_banner "now keeping only the longest nanopore organelle reads - round 2"
 
 filtlong --length_weight 1 --mean_q_weight 0 --window_q_weight 0 \
---target_bases 40000000 $nano_extracted2 | gzip > $nano_extracted_long2
+--target_bases $target_bases $nano_extracted2 | gzip > $nano_extracted_long2
 
 #...........................................................................
 msg_banner "now assembling nanopore organelle reads - round 2"
@@ -497,19 +497,24 @@ cp miniasm.gfa raven.gfa graphs/
 #...........................................................................
 msg_banner "organise extracted reads"
 
+
+seqkit stats $nano_extracted $nano_extracted_long $nano_extracted2 $nano_extracted_long2 \
+-Ta > nanopore_read_stats.tsv
+
 mkdir organelle-reads-nanopore
 mv $nano_extracted $nano_extracted_long \
 $nano_extracted2 $nano_extracted_long2 organelle-reads-nanopore/
+
+seqkit stats $R1_extracted $R2_extracted $R1_extracted_subset $R2_extracted_subset \
+-Ta > illumina_read_stats.tsv
 
 mkdir organelle-reads-illumina
 mv $R1_extracted $R2_extracted \
 $R1_extracted_subset $R2_extracted_subset organelle-reads-illumina/
 
 #...........................................................................
-msg_banner "now calculating stats for reads and assemblies"
+msg_banner "now calculating stats"
 
-seqkit stats organelle-reads-nanopore/* -Ta > nano_read_stats.tsv
-seqkit stats organelle-reads-illumina/* -Ta > illumina_read_stats.tsv
 seqkit stats assemblies/* -Ta > assembly_stats.tsv
 
 mkdir stats
@@ -519,7 +524,7 @@ mv nano_read_stats.tsv illumina_read_stats.tsv assembly_stats.tsv stats/
 msg_banner "get results"
 
 mkdir results
-mv assemblies graphs bams stats results/
+mv organelle-reads-nanopore organelle-reads-illumina assemblies graphs bams stats results/
 
 #...........................................................................
 msg_banner "Script finished!"
