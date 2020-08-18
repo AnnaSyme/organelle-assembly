@@ -2,14 +2,14 @@
 
 A script to assemble a plastid or mitochondrial genome from long and short reads. 
 
-To run:
+## To run:
 
 ```
 conda activate bio
 bash assembler.sh -b baits.fasta -g 160000 -s 40000000 R1.fasta R2.fasta nano.fq.gz
 ```
 
-Inputs:
+## Inputs:
 
 * -b baits file, e.g. gene sequences of related species
 * -g expected genome size 
@@ -17,7 +17,7 @@ Inputs:
 * R1 and R2 illumina reads, already trimmed and filtered (see fastp.sh script)
 * Nanopore reads, raw
 
-How it works (abridged):
+## How it works (abridged):
 
 * Uses a baits file to extract nanopore organelle reads (e.g. mitochondrial or chloroplast) from **all** the sequencing reads (e.g. nuclear, mitochondrial, chloroplast)
 * Assembles these reads (Flye); polishes assembly (Racon)
@@ -28,12 +28,12 @@ How it works (abridged):
 * Further assemblies for comparison: Raven, Miniasm, Unicycler
 * Reports read and assembly stats
 
-Where are the results?
+## Where are the results?
 
 * The `results` folder has assemblies, assembly graphs, extracted reads, read-mapping bam files, and read/assembly stats.
 * The script run and screen output is saved as `logfile.txt`
 
-Tools:
+## Tools:
 
 Installed with conda.
 
