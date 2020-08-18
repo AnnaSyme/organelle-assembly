@@ -1,5 +1,15 @@
 #!/usr/bin/env bash
 
+{
+
+#set up logfile
+now=$(date +%Y_%m_%d_%H_%M)
+# print info in logfile
+echo "log file for $0"
+# $0 is the script name
+echo "year_month_day_hour_minute $now"
+
+
 #A script to assemble an organelle genome
 
 #............................................................................
@@ -25,7 +35,8 @@ script=$(basename $0) #script name less file path
 baits=""
 genome_size=160000  #set as input arg
 threads=16
-target_bases=250*($genome_size)
+target_bases=40000000 #set as input arg
+
 #............................................................................
 # Functions
 
@@ -62,6 +73,7 @@ function usage {
   msg "   -h                     Show this help"
   msg "   -t NUM                 Number of threads (default=16)"
   msg "   -g NUM                 genome size in bp (default=160000)"
+  msg "   -s NUM                 target bases in bp (default=4000000)"
   msg "   -b FILE                bait sequences file name"
   msg "Example:"
   msg "   $script -t 8 R1.fq.gz R2.fq.gz minion.fq.gz"
@@ -79,7 +91,7 @@ function usage {
 #instead it will label an odd flag as a ?
 #the extra : at the end means it will label missing args as :
 
-while getopts ':ht:g:b::' opt ; do
+while getopts ':ht:g:s:b::' opt ; do
   case $opt in
     h)
       usage
@@ -89,6 +101,9 @@ while getopts ':ht:g:b::' opt ; do
       ;;
     g)
       genome_size=$OPTARG
+      ;;
+    s)
+      target_bases=$OPTARG
       ;;
     b)
       baits=$OPTARG
@@ -157,15 +172,16 @@ nano_extracted_long2=nano_extracted_long2.fq.gz
 #these assemblies will be created during run
 
 #round 1 assembly
-assembly_flye=assembly_flye.fasta
-assembly_flye_racon1=assembly_flye_racon1.fasta
-assembly_flye_racon2=assembly_flye_racon2.fasta
+assembly_flye1=assembly_flye1.fasta
+assembly_flye1_racon1=assembly_flye1_racon1.fasta
+assembly_flye1_racon2=assembly_flye1_racon2.fasta
 
 #round 2 assembly
 assembly_flye2=assembly_flye2.fasta
 assembly_flye2_racon1=assembly_flye2_racon1.fasta
 assembly_flye2_racon2=assembly_flye2_racon2.fasta
 assembly_flye2_racon_pilon1=assembly_flye2_racon_pilon1.fasta
+assembly_flye2_racon_pilon2=assembly_flye2_racon_pilon2.fasta
 
 #raven 
 assembly_raven=assembly_raven.fasta
@@ -209,24 +225,24 @@ flye --nano-raw $nano_extracted_long --genome-size $genome_size \
 #using uncorrected reads as read correction can lead to errors
 #other flye options had little effect here - keep haplotpyes, meta, trestle
 
-cp flye-out/assembly.fasta $assembly_flye
+cp flye-out/assembly.fasta $assembly_flye1
 
 #...........................................................................
 msg_banner "now polishing flye assembly with long reads - round 1"
 
 #round 1. make overlaps file, then run racon
-minimap2 -x map-ont -t $threads $assembly_flye $nano_extracted_long \
+minimap2 -x map-ont -t $threads $assembly_flye1 $nano_extracted_long \
 | gzip > overlaps1.paf.gz
 
 racon --threads $threads $nano_extracted_long overlaps1.paf.gz \
-$assembly_flye > $assembly_flye_racon1
+$assembly_flye1 > $assembly_flye1_racon1
 
 #round 2
-minimap2 -x map-ont -t $threads $assembly_flye_racon1 $nano_extracted_long \
+minimap2 -x map-ont -t $threads $assembly_flye1_racon1 $nano_extracted_long \
 | gzip > overlaps2.paf.gz
 
 racon --threads $threads $nano_extracted_long overlaps2.paf.gz \
-$assembly_flye_racon1 > $assembly_flye_racon2
+$assembly_flye1_racon1 > $assembly_flye1_racon2
 
 #here, further rounds of polishing made little difference
 #option to add in medaka polishing here
@@ -238,7 +254,7 @@ msg_banner "now extracting organelle nanopore reads from all reads - round 2"
 #need to increase minimum match value
 #otherwise too many reads are extracted and they don't assemble
 
-minimap2 -m 5000 -a -x map-ont -t $threads $assembly_flye_racon2 $nano_raw | 
+minimap2 -m 5000 -a -x map-ont -t $threads $assembly_flye1_racon2 $nano_raw | 
 samtools fastq -0 $nano_extracted2 -n -F 4 -
 
 #...........................................................................
@@ -312,15 +328,19 @@ pilon --genome $assembly_flye2_racon2 --frags flye_aln1.bam \
 #fix bases, not contig breaks in case that makes incorrect breaks
 
 #round 2 pilon polish
-#made no difference but left in as option
-#bwa index $assembly_flye_racon_pilon1
-#bwa mem -t $threads $assembly_flye_racon_pilon1 $R1_extracted_subset $R2_extracted_subset \
-#| samtools sort > flye_aln2.bam
-#samtools index flye_aln2.bam
-#samtools faidx $assembly_flye_racon_pilon1
-#pilon --genome $assembly_flye_racon_pilon1 --frags flye_aln2.bam \
-#--output assembly_flye_racon_pilon2 \
-#--fix bases --mindepth 0.5 --changes --threads $threads --verbose
+
+bwa index $assembly_flye2_racon_pilon1
+
+bwa mem -t $threads $assembly_flye2_racon_pilon1 $R1_extracted_subset $R2_extracted_subset \
+| samtools sort > flye_aln1.bam
+
+samtools index flye_aln1.bam
+
+samtools faidx $assembly_flye2_racon_pilon1 
+
+pilon --genome $assembly_flye2_racon_pilon1  --frags flye_aln1.bam \
+--output assembly_flye2_racon_pilon2 \
+--fix bases --mindepth 0.5 --changes --threads $threads --verbose
 
 #...........................................................................
 msg_banner "now running raven assembler"
@@ -430,37 +450,78 @@ pilon --genome $assembly_miniasm_minipolished --frags mini_pilon_aln1.bam \
 #...........................................................................
 msg_banner "now mapping long reads to final flye assembly"
 
-minimap2 -ax map-ont $assembly_flye2_racon_pilon1 $nano_extracted_long2 \
+minimap2 -ax map-ont $assembly_flye2_racon_pilon2 $nano_extracted_long2 \
 | samtools sort -o longmapped.bam
+
+samtools depth -a longmapped.bam > longdepths
+awk '$3 == "0"' < longdepths > longawk
+wc -l longawk > longmapped_positions_zero_reads.txt
 
 #...........................................................................
 msg_banner "now mapping short reads to final flye assembly"
 
-bwa index $assembly_flye2_racon_pilon1
+bwa index $assembly_flye2_racon_pilon2
 
-bwa mem -t $threads $assembly_flye2_racon_pilon1 $R1_extracted_subset $R2_extracted_subset \
+bwa mem -t $threads $assembly_flye2_racon_pilon2 $R1_extracted_subset $R2_extracted_subset \
 | samtools sort -o shortmapped.bam
 
+samtools depth -a shortmapped.bam > shortdepths
+awk '$3 == "0"' < shortdepths > shortawk
+wc -l shortawk > shortmapped_positions_zero_reads.txt
+
+mkdir bams
+mv longmapped.bam shortmapped.bam bams/
+mv longmapped_positions_zero_reads.txt shortmapped_positions_zero_reads.txt bams/
+
 #...........................................................................
-msg_banner "now calculating stats for reads and assemblies"
+msg_banner "organise assemblies and graphs"
 
-seqkit stats $nano_raw $nano_extracted $nano_extracted_long \
-$nano_extracted2 $nano_extracted_long2 \
--Ta > nano_read_stats.tsv
-
-seqkit stats $R1 $R2 $R1_extracted $R2_extracted \
-$R1_extracted_subset $R2_extracted_subset \
--Ta > illumina_read_stats.tsv
-
-seqkit stats \
-$assembly_flye $assembly_flye_racon1 $assembly_flye_racon2 \
+#move all assemblies into one folder
+mkdir assemblies
+cp $assembly_flye1 $assembly_flye1_racon1 $assembly_flye1_racon2 \
 $assembly_flye2 $assembly_flye2_racon1 $assembly_flye2_racon2 \
-$assembly_flye2_racon_pilon1 \
+$assembly_flye2_racon_pilon1 $assembly_flye2_racon_pilon2 \
 $assembly_raven $assembly_raven_pilon \
 $assembly_unicycler \
 $assembly_miniasm \
 $assembly_miniasm_minipolished $assembly_miniasm_minipolished_pilon1 \
--Ta > assembly_stats.tsv
+assemblies/
+
+#move graphs into one folder
+mkdir graphs
+cp flye-out/assembly_graph.gfa graphs/flye1-assembly.gfa
+cp flye-out2/assembly_graph.gfa graphs/flye2-assembly.gfa
+cp unicycler/assembly.gfa graphs/unicycler.gfa
+cp miniasm.gfa raven.gfa graphs/
+
+#...........................................................................
+msg_banner "organise extracted reads"
+
+mkdir organelle-reads-nanopore
+mv $nano_extracted $nano_extracted_long \
+$nano_extracted2 $nano_extracted_long2 organelle-reads-nanopore/
+
+mkdir organelle-reads-illumina
+mv $R1_extracted $R2_extracted \
+$R1_extracted_subset $R2_extracted_subset organelle-reads-illumina/
+
+#...........................................................................
+msg_banner "now calculating stats for reads and assemblies"
+
+seqkit stats organelle-reads-nanopore/* -Ta > nano_read_stats.tsv
+seqkit stats organelle-reads-illumina/* -Ta > illumina_read_stats.tsv
+seqkit stats assemblies/* -Ta > assembly_stats.tsv
+
+mkdir stats
+mv nano_read_stats.tsv illumina_read_stats.tsv assembly_stats.tsv stats/
+
+#...........................................................................
+msg_banner "get results"
+
+mkdir results
+mv assemblies graphs bams stats results/
 
 #...........................................................................
 msg_banner "Script finished!"
+
+} 2>&1 | tee logfile.txt 
