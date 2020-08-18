@@ -33,6 +33,32 @@ Where are the results?
 * The `results` folder has assemblies, assembly graphs, extracted reads, read-mapping bam files, and read/assembly stats.
 * The script run and screen output is saved as `logfile.txt`
 
+Tools:
+
+Installed with conda.
+
+```
+minimap2
+samtools
+filtlong
+flye
+racon
+raven
+fastp
+rasusa
+bwa
+pilon
+unicycler
+miniasm
+minipolish
+mummer
+seqkit
+```
+
+A conda env yml file is included this repo, with a record of the tools and versions used in the analysis, but this environment is platform-dependent (linux).
+
+
+
 
 
 
