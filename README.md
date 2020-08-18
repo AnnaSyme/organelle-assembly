@@ -31,7 +31,7 @@ How it works (abridged):
 Where are the results?
 
 * The `results` folder has assemblies, assembly graphs, extracted reads, read-mapping bam files, and read/assembly stats.
-* The whole script is saved as `logfile.txt`
+* The script run and screen output is saved as `logfile.txt`
 
 
 
