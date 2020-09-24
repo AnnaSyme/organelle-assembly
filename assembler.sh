@@ -518,7 +518,7 @@ msg_banner "now calculating stats"
 seqkit stats assemblies/* -Ta > assembly_stats.tsv
 
 mkdir stats
-mv nano_read_stats.tsv illumina_read_stats.tsv assembly_stats.tsv stats/
+mv nanopore_read_stats.tsv illumina_read_stats.tsv assembly_stats.tsv stats/
 
 #...........................................................................
 msg_banner "get results"
