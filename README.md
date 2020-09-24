@@ -11,9 +11,9 @@ bash assembler.sh -b baits.fasta -g 160000 -s 40000000 R1.fasta R2.fasta nano.fq
 
 ## Inputs:
 
-* -b baits file, e.g. gene sequences of related species
-* -g expected genome size 
-* -s target bases (for Filtlong - e.g. coverage (250) x genome size)
+* `-b` baits file, e.g. gene sequences of related species
+* `-g` expected genome size 
+* `-s` target bases (for Filtlong - e.g. coverage (250) x genome size)
 * R1 and R2 illumina reads, already trimmed and filtered (see fastp.sh script)
 * Nanopore reads, raw
 
