@@ -1,7 +1,0 @@
-name: assemblerenv
-channels:
-  - conda-forge
-  - bioconda
-  - defaults
-prefix: /home/anna/miniconda3/envs/assemblerenv
-
