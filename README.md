@@ -55,7 +55,7 @@ mummer
 seqkit
 ```
 
-A conda env yml file is included this repo, with a record of the tools and versions used in the analysis, but this environment is platform-dependent (linux).
+See packagae-list.txt for full details. 
 
 
 
