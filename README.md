@@ -58,6 +58,12 @@ seqkit
 See packagae-list.txt for full details. 
 
 
+## Test data 
+
+Here are some links to test data.
+
+* Syme, Anna. (2019). Chloroplast genome sequencing reads from sweet potato [Data set]. Zenodo. https://doi.org/10.5281/zenodo.3567224
+* Syme, Anna. (2020). Chloroplast genome sequencing reads from snow gum [Data set]. Zenodo. https://doi.org/10.5281/zenodo.3600662
 
 
 
