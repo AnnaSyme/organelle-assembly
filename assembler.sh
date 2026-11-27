@@ -63,7 +63,7 @@ function msg_banner {
 function usage {
   banner
   msg "$script\n   Assemble an organelle genome with long and short reads."
-  msg "Author:\n  Anna Syme, anna.syme@gmail.com"
+  msg "Author:\n  Anna Syme, https://github.com/AnnaSyme"
   msg "Usage:\n   $script [options] R1 R2 nano"
   msg "Parameters:"
   msg "   Illumina R1 reads, trimmed, filtered   R1.fq.gz"
